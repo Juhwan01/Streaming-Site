@@ -9,22 +9,22 @@ import json
 app = FastAPI()
 
 class RoomCreateRequest(BaseModel):
-    title: int
+    name: str
 
 class ChatMessage(BaseModel):
+    type: str
     username: str
-    message: str
+    message: str = None
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 필요한 도메인으로 제한하는 것이 보안에 좋습니다.
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-ws_user = []
-ws_group = {}
+rooms = {}
 
 # Hugging Face API 설정
 API_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN")
@@ -41,14 +41,12 @@ async def check_content(text):
         response.raise_for_status()
         result = response.json()[0]
         
-        # 모든 카테고리와 점수를 로깅
         for category in result:
             print(f"Category: {category['label']}, Score: {category['score']}")
         
-        # '악플/욕설' 카테고리 찾기
         bad_content = next((item for item in result if item['label'] == '악플/욕설'), None)
         
-        if bad_content and bad_content['score'] > 0.7:  # 임계값 설정 (예: 0.7)
+        if bad_content and bad_content['score'] > 0.4:
             return '악플/욕설', bad_content['score']
         else:
             return 'clean', 0.0
@@ -56,69 +54,52 @@ async def check_content(text):
         print(f"Error in content check: {str(e)}")
         return None, None
 
-async def send_warning(websocket: WebSocket, message: str):
-    await websocket.send_json({"type": "warning", "message": message})
-
-@app.websocket("/ws/notice_board")
-async def websocket_notice(websocket: WebSocket):
+@app.websocket("/ws/{room_name}")
+async def websocket_endpoint(websocket: WebSocket, room_name: str):
     await websocket.accept()
-    ws_user.append(websocket)
+    if room_name not in rooms:
+        rooms[room_name] = []
+    rooms[room_name].append(websocket)
     try:
         while True:
             data = await websocket.receive_json()
             chat_message = ChatMessage(**data)
-            category, score = await check_content(chat_message.message)
             
-            print(f"Original message: {chat_message.message}")  # 백엔드 로깅
-            print(f"Content check result: category={category}, score={score}")
+            if chat_message.type == 'join':
+                join_message = f"{chat_message.username} has joined the room."
+                await broadcast(room_name, {"type": "system", "message": join_message})
+            elif chat_message.type == 'message':
+                category, score = await check_content(chat_message.message)
+                
+                print(f"Original message: {chat_message.message}")
+                print(f"Content check result: category={category}, score={score}")
 
-            # 필터링 결과를 메시지에 포함
-            data["filter_result"] = {
-                "category": category,
-                "score": score
-            }
+                data["filter_result"] = {
+                    "category": category,
+                    "score": score
+                }
 
-            for wb in ws_user:
-                await wb.send_json(data)
+                await broadcast(room_name, data)
     except WebSocketDisconnect:
-        ws_user.remove(websocket)
+        rooms[room_name].remove(websocket)
+        if not rooms[room_name]:
+            del rooms[room_name]
 
-@app.websocket("/ws/{client_id}")
-async def websocket_group(websocket: WebSocket, client_id: int):
-    await websocket.accept()
-    if client_id not in ws_group:
-        ws_group[client_id] = []
-    ws_group[client_id].append(websocket)
-    try:
-        while True:
-            data = await websocket.receive_json()
-            chat_message = ChatMessage(**data)
-            category, score = await check_content(chat_message.message)
-            
-            print(f"Original message: {chat_message.message}")
-            print(f"Content check result: category={category}, score={score}")
+async def broadcast(room_name: str, message: dict):
+    for connection in rooms[room_name]:
+        await connection.send_json(message)
 
-            # 필터링 결과를 메시지에 포함
-            data["filter_result"] = {
-                "category": category,
-                "score": score
-            }
+@app.get("/get_rooms")
+async def get_rooms():
+    return list(rooms.keys())
 
-            for wb in ws_group[client_id]:
-                await wb.send_json(data)
-    except WebSocketDisconnect:
-        ws_group[client_id].remove(websocket)
-        if not ws_group[client_id]:
-            del ws_group[client_id]
-
-@app.get("/get_group")
-async def get_group():
-    return list(ws_group.keys())
-
-@app.post("/create_group")
-async def create_group(payload: RoomCreateRequest):
-    ws_group[payload.title] = []
-    return True
+@app.post("/create_room")
+async def create_room(payload: RoomCreateRequest):
+    if payload.name not in rooms:
+        rooms[payload.name] = []
+        return {"success": True, "message": f"Room '{payload.name}' created successfully"}
+    else:
+        return {"success": False, "message": f"Room '{payload.name}' already exists"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
