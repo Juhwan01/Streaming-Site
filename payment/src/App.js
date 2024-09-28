@@ -88,7 +88,7 @@ const App = () => {
       {
         pg: 'kcp',
         pay_method: 'card',
-        merchant_uid: `merchant_${new Date().getTime()}`,
+        merchant_uid: `qwe${new Date().getTime()}`,
         name: '계정 충전',
         amount: 1000,
         buyer_email: user.email,
