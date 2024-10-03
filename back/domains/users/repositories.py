@@ -30,7 +30,10 @@ class UserRepository:
             await self._session.flush()
             await self._session.refresh(user_entity)
             
-            account_entity = Account(user_id=user_entity.id)
+            account_entity = Account(
+                user_id=user_entity.id,
+                updated_at=updated_at  # 여기에 updated_at 필드를 추가합니다
+            )
             self._session.add(account_entity)
             
             await self._session.commit()
