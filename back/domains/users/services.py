@@ -26,10 +26,15 @@ class UserService:
         return await self._repository.create_user(payload=payload)
 
     async def authenticate_user(self, username: str, password: str) -> Optional[User]:
-        user = await self._repository.get_user_by_username(username)
-        if not user or not self._verify_password(password, user.hashed_password):
-            return None
-        return user
+        try:
+            user = await self._repository.get_user_by_username(username)
+            print(f"User found: {user}")  # 디버깅을 위한 로그
+            if not user or not self._verify_password(password, user.hashed_password):
+                return None
+            return user
+        except Exception as e:
+            print(f"Authentication error: {str(e)}")  # 디버깅을 위한 로그
+            raise
 
     def create_access_token(self, data: dict) -> str:
         to_encode = data.copy()

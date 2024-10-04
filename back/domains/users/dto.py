@@ -47,3 +47,11 @@ class TopUpResponseDTO(BaseModel):
     message: str
     new_balance: Decimal
     amount: Decimal  # 추가된 필드
+    
+class RoomCreateRequest(BaseModel):
+    name: str
+
+class ChatMessage(BaseModel):
+    type: str
+    username: str
+    message: str = None
