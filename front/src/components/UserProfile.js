@@ -4,8 +4,8 @@ import axios from 'axios';
 
 
 const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'http://13.238.178.196:8000'
-  : 'http://localhost:8000';
+  ? 'http://13.238.178.196:3000'
+  : 'http://localhost:3000';
 
 const UserProfile = ({ user, onLogout }) => {
   const [topupAmount, setTopupAmount] = useState('');

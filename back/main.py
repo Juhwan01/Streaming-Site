@@ -18,10 +18,10 @@ rooms = {}
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React 앱의 URL
-    allow_credentials=True,
-    allow_methods=["*"],  # 모든 HTTP 메서드 허용
-    allow_headers=["*"],  # 모든 HTTP 헤더 허용
+    allow_origins=["*"],
+    allow_credentials=False,  # True에서 False로 변경
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 config = get_config()
