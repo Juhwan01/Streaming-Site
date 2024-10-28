@@ -5,12 +5,12 @@ import RoomList from './components/RoomList';
 import ChatRoom from './components/ChatRoom';
 import UserProfile from './components/UserProfile';
 const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'http://13.238.178.196:3000'
-  : 'http://localhost:3000';
+  ? 'http://13.238.178.196:8000'
+  : 'http://localhost:8000';
 
 const WS_URL = process.env.NODE_ENV === 'production'
-  ? 'ws://13.238.178.196:3000'
-  : 'ws://localhost:3000';
+  ? 'ws://13.238.178.196:8000'
+  : 'ws://localhost:8000';
 export default function App() {
   const [token, setToken] = useState('');
   const [user, setUser] = useState(null);

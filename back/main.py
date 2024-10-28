@@ -19,7 +19,7 @@ rooms = {}
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,  # True에서 False로 변경
+    allow_credentials=True,  # True에서 False로 변경
     allow_methods=["*"],
     allow_headers=["*"],
 )
