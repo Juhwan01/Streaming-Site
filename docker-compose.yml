@@ -3,15 +3,18 @@ version: '3.12'
 services:
   frontend:
     build: 
-      context: ./front  # React 프로젝트 디렉토리
+      context: ./front
     ports:
       - "3000:80"
     depends_on:
       - backend
 
   backend:
-    build: ./back  # 현재 디렉토리 (Python 백엔드)
+    build: ./back
     ports:
       - "8000:8000"
-    env_file:
-      - /back/.env  # 기존에 설정해둔 DB 연결 정보가 있는 환경변수 파일
+    environment:
+      - HUGGINGFACEHUB_API_TOKEN=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
+      - OPENAI_API_KEY=sk-i-am-a-god-00-lNQMyFRBXVZpxEe30Pj5T3BlbkFJ5ugtir9bzhPUW15KMqnv
+      - GITHUB_TOKEN=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
+      - GITHUB_USERNAME=Juhwan01
