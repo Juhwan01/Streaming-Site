@@ -4,7 +4,13 @@ import Login from './components/Login';
 import RoomList from './components/RoomList';
 import ChatRoom from './components/ChatRoom';
 import UserProfile from './components/UserProfile';
+const BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'http://13.238.178.196:8000'
+  : 'http://localhost:8000';
 
+const WS_URL = process.env.NODE_ENV === 'production'
+  ? 'ws://13.238.178.196:8000'
+  : 'ws://localhost:8000';
 export default function App() {
   const [token, setToken] = useState('');
   const [user, setUser] = useState(null);
@@ -43,7 +49,7 @@ export default function App() {
   const fetchUserInfo = async (currentToken) => {
     setIsLoading(true);
     try {
-      const response = await axios.get('http://localhost:8000/users/me', {
+      const response = await axios.get(`${BASE_URL}/users/me`, {
         headers: { Authorization: `Bearer ${currentToken}` }
       });
       console.log('User info received:', response.data);  // 이 부분을 통해 실제 데이터 구조 확인
@@ -58,7 +64,7 @@ export default function App() {
 
   const fetchRooms = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/get_rooms');
+      const response = await axios.get(`${BASE_URL}/get_rooms`);
       setRooms(response.data);
     } catch (error) {
       console.error('Error fetching rooms:', error);
@@ -67,7 +73,7 @@ export default function App() {
 
   const handleLogin = async (username, password) => {
     try {
-      const response = await axios.post('http://localhost:8000/login', 
+      const response = await axios.post(`${BASE_URL}/login`, 
         `username=${username}&password=${password}`,
         {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
@@ -94,7 +100,7 @@ export default function App() {
 
   const createRoom = async (roomName) => {
     try {
-      await axios.post('http://localhost:8000/create_room', { name: roomName });
+      await axios.post(`${BASE_URL}/create_room`, { name: roomName });
       fetchRooms();
     } catch (error) {
       console.error('Error creating room:', error);
@@ -103,7 +109,7 @@ export default function App() {
 
   const connectToRoom = (roomName) => {
     if (wsRef.current) wsRef.current.close();
-    wsRef.current = new WebSocket(`ws://localhost:8000/ws/${roomName}`);
+    wsRef.current = new WebSocket(`${WS_URL}/ws/${roomName}`);
     wsRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
       setMessages((prev) => [...prev, data]);
@@ -127,7 +133,7 @@ export default function App() {
 
   const handleTopup = async (amount) => {
     try {
-      const response = await axios.post('http://localhost:8000/charge', { amount }, {
+      const response = await axios.post(`${BASE_URL}/charge`, { amount }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUser({ ...user, balance: response.data.new_balance });

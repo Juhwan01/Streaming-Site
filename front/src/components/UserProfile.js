@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { DollarSign, LogOut } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000';  // 백엔드 API URL을 적절히 설정해주세요
+
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? 'http://13.238.178.196:8000'
+  : 'http://localhost:8000';
 
 const UserProfile = ({ user, onLogout }) => {
   const [topupAmount, setTopupAmount] = useState('');
