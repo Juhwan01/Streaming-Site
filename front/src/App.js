@@ -4,13 +4,9 @@ import Login from './components/Login';
 import RoomList from './components/RoomList';
 import ChatRoom from './components/ChatRoom';
 import UserProfile from './components/UserProfile';
-const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'http://13.210.70.181:8000'
-  : 'http://localhost:8000';
+const BASE_URL = 'http://13.210.70.181:8000';
 
-const WS_URL = process.env.NODE_ENV === 'production'
-  ? 'ws://13.210.70.181:8000'
-  : 'ws://localhost:8000';
+const WS_URL = 'ws://13.210.70.181:8000';
 export default function App() {
   const [token, setToken] = useState('');
   const [user, setUser] = useState(null);

@@ -3,9 +3,7 @@ import { DollarSign, LogOut } from 'lucide-react';
 import axios from 'axios';
 
 
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'http://13.210.70.181:8000'
-  : 'http://localhost:8000';
+const API_URL = 'http://13.210.70.181:8000';
 
 const UserProfile = ({ user, onLogout }) => {
   const [topupAmount, setTopupAmount] = useState('');
