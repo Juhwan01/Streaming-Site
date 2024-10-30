@@ -4,7 +4,7 @@ import axios from 'axios';
 
 
 const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'http://13.238.178.196:8000'
+  ? 'http://13.210.70.181:8000'
   : 'http://localhost:8000';
 
 const UserProfile = ({ user, onLogout }) => {
