@@ -6,8 +6,6 @@ services:
       - "80:3000"
     depends_on:
       - backend
-    environment:
-      - NODE_ENV=production
 
   backend:
     build: ./back
