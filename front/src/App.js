@@ -6,7 +6,7 @@ import ChatRoom from './components/ChatRoom';
 import UserProfile from './components/UserProfile';
 import "../src/index.css";
 
-const WS_URL = 'ws://localhost:8000';
+const WS_URL = 'ws://localhost:8001';
 
 const apiInstance = axios.create({
   baseURL: 'http://localhost:8001',
@@ -82,12 +82,20 @@ export default function App() {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         }
       );
-      const newToken = response.data.access_token;
-      localStorage.setItem('token', newToken);
-      setToken(newToken);
-      await fetchUserInfo(newToken);  // 로그인 성공 후 즉시 사용자 정보 가져오기
+
+      if (response.status === 200) {
+        const newToken = response.data.access_token;
+        localStorage.setItem('token', newToken);
+        setToken(newToken);
+        await fetchUserInfo(newToken);  // 로그인 성공 후 즉시 사용자 정보 가져오기
+        alert('로그인 성공!');
+      } else {
+        console.error('Login failed: Invalid response status');
+        alert('로그인 실패: 잘못된 응답 상태입니다.');
+      }
     } catch (error) {
       console.error('Login failed:', error);
+      alert('로그인 실패: ' + error.message);
       // 에러 처리
     }
   };
