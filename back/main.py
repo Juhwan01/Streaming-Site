@@ -204,13 +204,16 @@ async def add_stream_key(_payload: StreamKeyDTO, db: AsyncSession = Depends(get_
 async def getBroadCastInfo(query:str):
     for stream_key, stream_data in broadcast_info.items():
         querysim = []
+        keysiface = []
         querysim.append(ratio(stream_data['nickname'], query))
         querysim.append(ratio(stream_data['title'], query))
         for tag in stream_data['tag']:
             querysim.append(ratio(tag, query))
         for sim in querysim:
             if sim >= 0.6:
-                return stream_key
+                keysiface.append(broadcast_info[stream_key])
+        return keysiface
+        
 
 if __name__ == "__main__":
     import uvicorn
