@@ -33,7 +33,7 @@ const AddStreamKey = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8001/add_stream_key",
+        "http://3.36.103.8:8001/add_stream_key",
         {
           streamKey,
           tags: [selectedGame], // 선택된 게임을 태그 배열로 전송
@@ -90,7 +90,9 @@ const AddStreamKey = () => {
               required
             >
               <option value="">게임 선택</option>
-              <option value="zelda">The Legend of Zelda: Breath of the Wild</option>
+              <option value="zelda">
+                The Legend of Zelda: Breath of the Wild
+              </option>
               <option value="darksouls">Dark Souls</option>
               <option value="cod">Call of Duty</option>
               <option value="fortnite">Fortnite</option>
@@ -100,7 +102,9 @@ const AddStreamKey = () => {
               <option value="amongus">Among Us</option>
               <option value="stardew">Stardew Valley</option>
               <option value="hollowknight">Hollow Knight</option>
-              <option value="animalcrossing">Animal Crossing: New Horizons</option>
+              <option value="animalcrossing">
+                Animal Crossing: New Horizons
+              </option>
               <option value="sims">The Sims 4</option>
               <option value="gta">Grand Theft Auto V</option>
               <option value="eldenring">Elden Ring</option>

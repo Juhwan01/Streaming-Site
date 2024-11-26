@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RiKakaoTalkFill } from "react-icons/ri";
@@ -10,11 +10,11 @@ import profileImage from "@/app/assets/images/LimeCharacter.png";
 
 const SignUp = () => {
   const router = useRouter();
-  const [username, setUserName] = useState('');
-  const [email, setEmail] = useState('');
-  const [pw, setPW] = useState('');
-  const [name, setName] = useState('');
-  const [bio, setBio] = useState('');
+  const [username, setUserName] = useState("");
+  const [email, setEmail] = useState("");
+  const [pw, setPW] = useState("");
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
   const [file, setFile] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
   const [error, setError] = useState("");
@@ -23,10 +23,10 @@ const SignUp = () => {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
-      console.log('선택된 파일 정보:', {
+      console.log("선택된 파일 정보:", {
         이름: selectedFile.name,
         크기: `${(selectedFile.size / 1024).toFixed(2)}KB`,
-        타입: selectedFile.type
+        타입: selectedFile.type,
       });
       setFile(selectedFile);
     }
@@ -34,34 +34,34 @@ const SignUp = () => {
 
   const uploadImage = async () => {
     if (!file) {
-      console.log('파일이 선택되지 않음');
+      console.log("파일이 선택되지 않음");
       return null;
     }
 
     const formData = new FormData();
     formData.append("file", file);
-    
+
     try {
-      console.log('이미지 업로드 시작...');
-      const response = await fetch("http://localhost:8001/upload", {
+      console.log("이미지 업로드 시작...");
+      const response = await fetch("http://3.36.103.8:8001/upload", {
         method: "POST",
         body: formData,
       });
-      
+
       if (!response.ok) {
         throw new Error(`Upload failed with status: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log('업로드 응답:', result);
-      
+      console.log("업로드 응답:", result);
+
       // 이미지 URL에서 포트 번호를 8001로 변경
       let uploadedUrl = result.image_url;
-      if (uploadedUrl.includes('localhost:8000')) {
-        uploadedUrl = uploadedUrl.replace('localhost:8000', 'localhost:8001');
+      if (uploadedUrl.includes("3.36.103.8:8000")) {
+        uploadedUrl = uploadedUrl.replace("3.36.103.8:8000", "3.36.103.8:8001");
       }
-      
-      console.log('수정된 이미지 URL:', uploadedUrl);
+
+      console.log("수정된 이미지 URL:", uploadedUrl);
       setImageUrl(uploadedUrl);
       return uploadedUrl;
     } catch (error) {
@@ -83,14 +83,14 @@ const SignUp = () => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-    
+
     try {
       validateInputs();
 
       // 이미지 업로드
-      console.log('이미지 업로드 프로세스 시작');
+      console.log("이미지 업로드 프로세스 시작");
       const uploadedImageUrl = await uploadImage();
-      console.log('최종 이미지 URL:', uploadedImageUrl);
+      console.log("최종 이미지 URL:", uploadedImageUrl);
 
       // 회원가입 데이터 준비
       const signupData = {
@@ -99,23 +99,26 @@ const SignUp = () => {
         password: pw,
         full_name: name,
         bio,
-        profile_picture: uploadedImageUrl
+        profile_picture: uploadedImageUrl,
       };
-      
-      console.log('회원가입 요청 데이터:', signupData);
+
+      console.log("회원가입 요청 데이터:", signupData);
 
       // 회원가입 요청
-      const response = await axios.post("http://localhost:8001/signup", signupData);
-      console.log('회원가입 성공:', response.data);
-      
-      router.push('/signin');
+      const response = await axios.post(
+        "http://3.36.103.8:8001/signup",
+        signupData
+      );
+      console.log("회원가입 성공:", response.data);
+
+      router.push("/signin");
     } catch (error) {
-      console.error('회원가입 실패:', error);
-      console.error('에러 세부정보:', {
+      console.error("회원가입 실패:", error);
+      console.error("에러 세부정보:", {
         message: error.message,
-        response: error.response?.data
+        response: error.response?.data,
       });
-      
+
       // 사용자에게 보여줄 에러 메시지 설정
       if (error.response?.data?.detail?.includes("Database integrity error")) {
         setError("이미 사용 중인 사용자명 또는 이메일입니다.");
@@ -141,9 +144,10 @@ const SignUp = () => {
               className="rounded-full"
             />
           </div>
-          <span 
+          <span
             onClick={() => router.push("/")}
-            className="text-4xl font-bold text-lime-500 cursor-pointer hover:text-lime-600 transition-colors">
+            className="text-4xl font-bold text-lime-500 cursor-pointer hover:text-lime-600 transition-colors"
+          >
             LIME
           </span>
           <p className="text-gray-600 text-sm">새로운 스트리밍의 시작</p>
@@ -202,31 +206,40 @@ const SignUp = () => {
 
           {/* 성별 선택 버튼 */}
           <div className="flex justify-between gap-4">
-            <button 
+            <button
               type="button"
               onClick={() => setBio("남성")}
               className={`flex-1 py-3 rounded-lg font-medium transition-all
-                ${bio === "남성" 
-                  ? "bg-blue-500 text-white" 
-                  : "bg-gray-100 text-gray-700 hover:bg-blue-50"}`}>
+                ${
+                  bio === "남성"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-blue-50"
+                }`}
+            >
               남성
             </button>
-            <button 
+            <button
               type="button"
               onClick={() => setBio("여성")}
               className={`flex-1 py-3 rounded-lg font-medium transition-all
-                ${bio === "여성" 
-                  ? "bg-red-500 text-white" 
-                  : "bg-gray-100 text-gray-700 hover:bg-red-50"}`}>
+                ${
+                  bio === "여성"
+                    ? "bg-red-500 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-red-50"
+                }`}
+            >
               여성
             </button>
-            <button 
+            <button
               type="button"
               onClick={() => setBio("비공개")}
               className={`flex-1 py-3 rounded-lg font-medium transition-all
-                ${bio === "비공개" 
-                  ? "bg-gray-800 text-white" 
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
+                ${
+                  bio === "비공개"
+                    ? "bg-gray-800 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+            >
               비공개
             </button>
           </div>
@@ -236,27 +249,43 @@ const SignUp = () => {
             <div className="flex items-center justify-center w-full">
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-all">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <svg className="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                  <svg
+                    className="w-8 h-8 mb-4 text-gray-500"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 20 16"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                    />
                   </svg>
-                  <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">프로필 이미지 업로드</span></p>
-                  <p className="text-xs text-gray-500">PNG, JPG (MAX. 800x400px)</p>
+                  <p className="mb-2 text-sm text-gray-500">
+                    <span className="font-semibold">프로필 이미지 업로드</span>
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    PNG, JPG (MAX. 800x400px)
+                  </p>
                 </div>
-                <input 
-                  type="file" 
-                  className="hidden" 
+                <input
+                  type="file"
+                  className="hidden"
                   onChange={handleFileChange}
                   accept="image/*"
                 />
               </label>
             </div>
-            
+
             {imageUrl && (
               <div className="space-y-2">
                 <div className="relative w-full h-40 rounded-lg overflow-hidden">
-                  <img 
-                    src={imageUrl} 
-                    alt="Uploaded" 
+                  <img
+                    src={imageUrl}
+                    alt="Uploaded"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -269,16 +298,20 @@ const SignUp = () => {
             type="submit"
             disabled={isLoading}
             className={`w-full py-3 bg-lime-500 text-white rounded-lg font-medium shadow-lg
-              ${isLoading 
-                ? 'opacity-50 cursor-not-allowed' 
-                : 'hover:bg-lime-600 transform hover:-translate-y-0.5 transition-all'}`}
+              ${
+                isLoading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-lime-600 transform hover:-translate-y-0.5 transition-all"
+              }`}
           >
             {isLoading ? (
               <div className="flex items-center justify-center">
-                <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"/>
+                <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2" />
                 처리중...
               </div>
-            ) : '회원가입'}
+            ) : (
+              "회원가입"
+            )}
           </button>
         </form>
 
@@ -296,7 +329,7 @@ const SignUp = () => {
         <div className="space-y-3">
           <button
             className="w-full py-3 flex items-center justify-center space-x-2 rounded-lg bg-[#FEE500] hover:bg-[#FDD800] text-black font-medium shadow-md hover:-translate-y-0.5 transition-all"
-            onClick={() => console.log('카카오 로그인')}
+            onClick={() => console.log("카카오 로그인")}
           >
             <RiKakaoTalkFill className="text-2xl" />
             <span>카카오로 계속하기</span>
@@ -304,7 +337,7 @@ const SignUp = () => {
 
           <button
             className="w-full py-3 flex items-center justify-center space-x-2 rounded-lg bg-[#03C75A] hover:bg-[#02B150] text-white font-medium shadow-md hover:-translate-y-0.5 transition-all"
-            onClick={() => console.log('네이버 로그인')}
+            onClick={() => console.log("네이버 로그인")}
           >
             <SiNaver className="text-lg" />
             <span>네이버로 계속하기</span>
@@ -312,7 +345,7 @@ const SignUp = () => {
 
           <button
             className="w-full py-3 flex items-center justify-center space-x-2 rounded-lg bg-black hover:bg-gray-800 text-white font-medium shadow-md hover:-translate-y-0.5 transition-all"
-            onClick={() => console.log('애플 로그인')}
+            onClick={() => console.log("애플 로그인")}
           >
             <FaApple className="text-2xl" />
             <span>Apple로 계속하기</span>
@@ -321,9 +354,9 @@ const SignUp = () => {
 
         {/* 로그인 링크 */}
         <p className="text-center text-gray-600 text-sm">
-          이미 계정이 있으신가요?{' '}
-          <span 
-            onClick={() => router.push('/signin')}
+          이미 계정이 있으신가요?{" "}
+          <span
+            onClick={() => router.push("/signin")}
             className="text-lime-500 font-medium cursor-pointer hover:text-lime-600 transition-colors"
           >
             로그인

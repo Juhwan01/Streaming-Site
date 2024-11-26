@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RiKakaoTalkFill } from "react-icons/ri";
@@ -14,27 +14,28 @@ const SignIn = () => {
   const handleSignIn = async () => {
     try {
       const formData = new URLSearchParams();
-      formData.append('username', id);
-      formData.append('password', pw);
-      formData.append('grant_type', 'password');
-      
-      const response = await axios.post('http://localhost:8001/login',
+      formData.append("username", id);
+      formData.append("password", pw);
+      formData.append("grant_type", "password");
+
+      const response = await axios.post(
+        "http://3.36.103.8:8001/login",
         formData.toString(),
         {
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
         }
       );
 
       if (response.data.access_token) {
-        localStorage.setItem('token', response.data.access_token);
-        router.push('/');
+        localStorage.setItem("token", response.data.access_token);
+        router.push("/");
       }
-    } catch(error) {
-      console.log('에러내용:', error);
+    } catch (error) {
+      console.log("에러내용:", error);
     }
-  }
+  };
 
   return (
     <div className="w-full min-h-screen flex items-center justify-center bg-white p-4">
@@ -43,10 +44,15 @@ const SignIn = () => {
         <div className="w-full h-auto md:h-1/2 flex flex-col items-center justify-center space-y-8">
           {/* 로고와 안내 텍스트 */}
           <div className="w-full text-center space-y-4">
-            <span 
+            <span
               onClick={() => router.push("/")}
-              className="text-3xl text-lime-500 cursor-pointer">LIME</span>
-            <p className="text-base md:text-xl">로그인 후 이용하실 수 있습니다.</p>
+              className="text-3xl text-lime-500 cursor-pointer"
+            >
+              LIME
+            </span>
+            <p className="text-base md:text-xl">
+              로그인 후 이용하실 수 있습니다.
+            </p>
           </div>
 
           {/* 로그인 폼 */}
@@ -75,22 +81,22 @@ const SignIn = () => {
           <div className="w-full space-y-4">
             <div className="flex flex-wrap justify-around text-sm text-slate-400 gap-2">
               <label className="flex items-center space-x-2">
-                <input type="checkbox" className="rounded"/>
+                <input type="checkbox" className="rounded" />
                 <span>로그인 상태 유지</span>
               </label>
               <label className="flex items-center space-x-2">
-                <input type="checkbox" className="rounded"/>
+                <input type="checkbox" className="rounded" />
                 <span>아이디 저장</span>
               </label>
             </div>
-            
+
             <div className="flex justify-around text-sm text-slate-300">
               <button className="hover:text-slate-400">아이디 찾기</button>
               <span>|</span>
               <button className="hover:text-slate-400">비밀번호 찾기</button>
               <span>|</span>
-              <button 
-                onClick={() => router.push('/signup')}
+              <button
+                onClick={() => router.push("/signup")}
                 className="hover:text-slate-400"
               >
                 회원가입
@@ -102,15 +108,15 @@ const SignIn = () => {
         {/* 소셜 로그인 버튼 */}
         <div className="w-full mt-8 space-y-4">
           <button className="w-full h-12 flex items-center justify-center space-x-4 px-4 text-black rounded-md bg-[#FEE500] hover:bg-[#FDD800] transition-colors">
-            <RiKakaoTalkFill className="text-2xl"/>
+            <RiKakaoTalkFill className="text-2xl" />
             <span>카카오로 로그인</span>
           </button>
           <button className="w-full h-12 flex items-center justify-center space-x-4 px-4 text-white rounded-md bg-[#03C75A] hover:bg-[#02B351] transition-colors">
-            <SiNaver className="text-lg"/>
+            <SiNaver className="text-lg" />
             <span>네이버로 로그인</span>
           </button>
           <button className="w-full h-12 flex items-center justify-center space-x-4 px-4 text-white rounded-md bg-black hover:bg-gray-800 transition-colors">
-            <FaApple className="text-2xl"/>
+            <FaApple className="text-2xl" />
             <span>애플로 로그인</span>
           </button>
         </div>

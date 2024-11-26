@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import Hls from 'hls.js';
-import Header from '@/components/Header';
-import { MessageSquare, Users, Share2, Heart } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import React, { useEffect, useRef, useState } from "react";
+import Hls from "hls.js";
+import Header from "@/components/Header";
+import { MessageSquare, Users, Share2, Heart } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 const TagButton = ({ tags }) => {
   return (
@@ -50,7 +50,9 @@ const BroadcastPlayer = ({ streamUrl }) => {
             }
           }
         });
-      } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+      } else if (
+        videoRef.current.canPlayType("application/vnd.apple.mpegurl")
+      ) {
         videoRef.current.src = streamUrl;
       }
     }
@@ -81,12 +83,12 @@ const ChatMessage = ({ username, message }) => (
 const Broadcast = () => {
   // URL 쿼리 파라미터에서 데이터 가져오기
   const searchParams = useSearchParams();
-  const streamId = searchParams.get('streamId');
-  const title = searchParams.get('title');
-  const nickname = searchParams.get('nickname');
-  const profilePic = searchParams.get('profilePic');
+  const streamId = searchParams.get("streamId");
+  const title = searchParams.get("title");
+  const nickname = searchParams.get("nickname");
+  const profilePic = searchParams.get("profilePic");
 
-  const streamUrl = `http://localhost:8000/live/${streamId}/index.m3u8`;
+  const streamUrl = `http://3.36.103.8:8000/live/${streamId}/index.m3u8`;
   const [viewerCount, setViewerCount] = useState(1234);
   const [isLiked, setIsLiked] = useState(false);
 
@@ -100,7 +102,7 @@ const Broadcast = () => {
             <div className="relative rounded-lg overflow-hidden bg-gray-800">
               <BroadcastPlayer streamUrl={streamUrl} />
             </div>
-            
+
             {/* Streamer Info */}
             <div className="mt-5 bg-gray-800 rounded-lg p-6 border">
               <div className="flex items-center justify-between">
@@ -116,20 +118,23 @@ const Broadcast = () => {
                     <h1 className="text-xl font-bold text-white">{nickname}</h1>
                     <p className="text-gray-400">Stream ID: {streamId}</p>
                   </div>
-                  <div className='flex text-white'>
-                    <TagButton tags="#롤방송"/>
-                    <TagButton tags="#롤방송"/>
-                    <TagButton tags="#롤방송"/>
+                  <div className="flex text-white">
+                    <TagButton tags="#롤방송" />
+                    <TagButton tags="#롤방송" />
+                    <TagButton tags="#롤방송" />
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <button 
+                  <button
                     onClick={() => setIsLiked(!isLiked)}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-full ${
-                      isLiked ? 'bg-red-600' : 'bg-gray-700'
+                      isLiked ? "bg-red-600" : "bg-gray-700"
                     } hover:bg-red-700 transition-colors`}
                   >
-                    <Heart className={isLiked ? 'fill-current' : ''} size={20} />
+                    <Heart
+                      className={isLiked ? "fill-current" : ""}
+                      size={20}
+                    />
                     <span className="text-white">좋아요</span>
                   </button>
                   <button className="flex items-center space-x-2 px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors">
@@ -138,11 +143,9 @@ const Broadcast = () => {
                   </button>
                 </div>
               </div>
-              <p className="mt-4 text-white">
-                {title}
-              </p>
+              <p className="mt-4 text-white">{title}</p>
               <div className="mt-4 flex items-center space-x-4 text-gray-400">
-                <div className=''>[테스터] 감기 조심 하십쇼 여러분</div>
+                <div className="">[테스터] 감기 조심 하십쇼 여러분</div>
                 <div className="flex items-center ">
                   <Users size={18} className="mr-2" />
                   <span>{viewerCount.toLocaleString()} 시청자</span>
@@ -160,13 +163,21 @@ const Broadcast = () => {
                     <MessageSquare size={18} className="mr-2" />
                     실시간 채팅
                   </h2>
-                  <span className="text-gray-400 text-sm">{viewerCount.toLocaleString()}</span>
+                  <span className="text-gray-400 text-sm">
+                    {viewerCount.toLocaleString()}
+                  </span>
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
                 <ChatMessage username="User123" message="안녕하세요!" />
-                <ChatMessage username="Gamer456" message="브론즈 화이팅입니다!" />
-                <ChatMessage username="Stream789" message="오늘도 재미있는 방송 감사합니다 ㅎㅎ" />
+                <ChatMessage
+                  username="Gamer456"
+                  message="브론즈 화이팅입니다!"
+                />
+                <ChatMessage
+                  username="Stream789"
+                  message="오늘도 재미있는 방송 감사합니다 ㅎㅎ"
+                />
               </div>
               <div className="p-4 border-t border-gray-700">
                 <input
