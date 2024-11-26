@@ -14,7 +14,9 @@ from domains.users.services import UserService
 from dependencies.auth import AuthService
 from fastapi import BackgroundTasks
 from fastapi.concurrency import run_in_threadpool
+from Levenshtein import ratio
 import httpx, shutil
+
 app = FastAPI()
 rooms = {}
 broadcast_info = {}
@@ -155,13 +157,16 @@ async def get_streams():
         )
     print(broadcast_info)
     print(room_dt)
-    for stream in room_dt.get('activeStreams', []):
-        room_key = stream.get('streamKey')
-        if room_key in broadcast_info:
-            broadcast_info[room_key].setdefault('broadcast_data', []).append({
-                'status': stream.get('status'),
-                'startTime': stream.get('startTime')
-            })
+    for key in broadcast_info.keys():
+       if broadcast_info[key]['broadcast_data'] == []:
+           for stream in room_dt.get('activeStreams', []):
+                room_key = stream.get('streamKey')
+                if room_key in broadcast_info:
+                    broadcast_info[room_key].setdefault('broadcast_data', []).append({
+                        'status': stream.get('status'),
+                        'startTime': stream.get('startTime')
+                    })
+                    broadcast_info[room_key]['startTime'] = stream.get('startTime')
     return broadcast_info
 
 @app.post("/add_stream_key", status_code=status.HTTP_201_CREATED)
@@ -194,6 +199,18 @@ async def add_stream_key(_payload: StreamKeyDTO, db: AsyncSession = Depends(get_
     rooms[_payload.streamKey] = []
     print(broadcast_info)
     return broadcast_info
+
+@app.get("/search")
+async def getBroadCastInfo(query:str):
+    for stream_key, stream_data in broadcast_info.items():
+        querysim = []
+        querysim.append(ratio(stream_data['nickname'], query))
+        querysim.append(ratio(stream_data['title'], query))
+        for tag in stream_data['tag']:
+            querysim.append(ratio(tag, query))
+        for sim in querysim:
+            if sim >= 0.6:
+                return stream_key
 
 if __name__ == "__main__":
     import uvicorn
