@@ -24,25 +24,6 @@ const TagButton = ({ tags }) => {
 const BroadcastPlayer = ({ streamUrl }) => {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      try {
-        const response = await apiInstance.get('/users/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setUser(response.data);
-      } catch (error) {
-        console.error('Error fetching user info:', error);
-      }
-    };
-
-    fetchUserInfo();
-  }, []);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -96,7 +77,6 @@ const BroadcastPlayer = ({ streamUrl }) => {
   );
 };
 
-// ChatMessage 컴포넌트 수정
 const ChatMessage = ({ username, message, timestamp, isCurrentUser, filterResult }) => {
   const renderMessage = (msg, filter) => {
     if (filter && filter.category === '악플/욕설') {
@@ -122,7 +102,7 @@ const ChatMessage = ({ username, message, timestamp, isCurrentUser, filterResult
   );
 };
 
-const DonationModal = ({ isOpen, onClose, onDonate, currentBalance, donationAmount, setDonationAmount, loading }) => {
+const DonationModal = ({ isOpen, onClose, onDonate, onCharge, currentBalance, donationAmount, setDonationAmount, loading }) => {
   if (!isOpen) return null;
 
   return (
@@ -147,7 +127,7 @@ const DonationModal = ({ isOpen, onClose, onDonate, currentBalance, donationAmou
           
           <div>
             <label className="block text-gray-400 text-sm mb-2">
-              후원 금액
+              금액
             </label>
             <input
               type="number"
@@ -166,10 +146,11 @@ const DonationModal = ({ isOpen, onClose, onDonate, currentBalance, donationAmou
           >
             {loading ? '처리중...' : '후원하기'}
           </button>
+          
           <button
-            onClick={onDonate}
+            onClick={onCharge}
             disabled={loading}
-            className="w-full px-4 py-3 bg-blue-500 hover:bg-yellow-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? '처리중...' : '충전하기'}
           </button>
@@ -191,8 +172,7 @@ const Broadcast = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [user, setUser] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState("");
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [donationAmount, setDonationAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const wsRef = useRef(null);
@@ -200,83 +180,131 @@ const Broadcast = () => {
 
   const streamUrl = `http://3.36.103.8:8000/live/${streamId}/index.m3u8`;
 
-// IMP 스크립트 로드를 위한 useEffect 추가
-useEffect(() => {
-  const script = document.createElement('script');
-  script.src = 'https://cdn.iamport.kr/v1/iamport.js';
-  script.async = true;
-  document.body.appendChild(script);
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.iamport.kr/v1/iamport.js';
+    script.async = true;
+    document.body.appendChild(script);
 
-  return () => {
-    document.body.removeChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const handleCharge = () => {
+    if (!donationAmount || isNaN(donationAmount) || donationAmount <= 0) {
+      alert('올바른 충전 금액을 입력해주세요.');
+      return;
+    }
+
+    setLoading(true);
+
+    const { IMP } = window;
+    IMP.init('imp80571156');
+
+    IMP.request_pay(
+      {
+        pg: 'kakaopay',
+        pay_method: 'card',
+        merchant_uid: `charge_${new Date().getTime()}`,
+        name: '계정 충전',
+        amount: parseInt(donationAmount),
+        buyer_email: user?.email || '',
+        buyer_name: user?.full_name || user?.username || '',
+        buyer_tel: '010-1234-5678',
+      },
+      async (rsp) => {
+        if (rsp.success) {
+          try {
+            const token = localStorage.getItem('token');
+            const response = await apiInstance.post('/charge', {
+              amount: rsp.paid_amount,
+              imp_uid: rsp.imp_uid,
+              merchant_uid: rsp.merchant_uid
+            }, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const userResponse = await apiInstance.get('/users/me', {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            setUser(userResponse.data);
+            
+            alert('충전이 완료되었습니다!');
+            setDonationAmount('');
+            setIsModalOpen(false);
+          } catch (error) {
+            console.error('충전 처리 실패:', error);
+            alert('충전 처리 중 오류가 발생했습니다.');
+          }
+        }
+        setLoading(false);
+      }
+    );
   };
-}, []);
 
-// 도네이션 처리 함수 추가
-const handleDonation = () => {
-  if (!donationAmount || isNaN(donationAmount) || donationAmount <= 0) {
-    alert('올바른 후원 금액을 입력해주세요.');
-    return;
-  }
-
-    // user.account.balance를 사용하여 잔액 확인
+  const handleDonation = async () => {
+    if (!donationAmount || isNaN(donationAmount) || donationAmount <= 0) {
+      alert('올바른 후원 금액을 입력해주세요.');
+      return;
+    }
+  
     const currentBalance = user.account?.balance || 0;
     if (parseInt(donationAmount) > currentBalance) {
       alert(`잔액이 부족합니다. 현재 잔액: ₩${parseFloat(currentBalance).toLocaleString()}`);
       return;
     }
-
-  setLoading(true);
-
-  const { IMP } = window;
-  IMP.init('imp80571156');  // 포트원 가맹점 식별코드
-
-  IMP.request_pay(
-    {
-      pg: 'kakaopay',
-      pay_method: 'card',
-      merchant_uid: `donation_${new Date().getTime()}`,
-      name: '스트리머 후원',
-      amount: parseInt(donationAmount),
-      buyer_email: user?.email || '',
-      buyer_name: user?.full_name || user?.username || '',
-      buyer_tel: '010-1234-5678',
-    },
-    async (rsp) => {
-      if (rsp.success) {
-        try {
-          const token = localStorage.getItem('token');
-          const response = await apiInstance.post('/charge', {
-            amount: rsp.paid_amount,
-            imp_uid: rsp.imp_uid,
-            merchant_uid: rsp.merchant_uid
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+  
+    setLoading(true);
+  
+    try {
+      const token = localStorage.getItem('token');
       
-          // WebSocket으로 후원 메시지 전송
-          if (wsRef.current) {
-            const donationMessage = {
-              type: 'message',  // 일반 메시지로 전송
-              username: user.username,
-              message: `${donationAmount}원 후원하셨습니다!`,
-              timestamp: new Date().toISOString(),
-            };
-            wsRef.current.send(JSON.stringify(donationMessage));
-          }
-          
-          alert('후원이 완료되었습니다!');
-          setDonationAmount('');
-        } catch (error) {
-          console.error('후원 처리 실패:', error);
-          alert('후원 처리 중 오류가 발생했습니다.');
+      // 잔액 차감 API 호출
+      const withdrawResponse = await apiInstance.post('/withdraw', {
+        amount: parseInt(donationAmount)
+      }, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
+      });
+  
+      // 차감이 성공했는지 확인
+      if (withdrawResponse.data && withdrawResponse.data.new_balance !== undefined) {
+        // 새로운 잔액으로 유저 정보 업데이트
+        setUser(prevUser => ({
+          ...prevUser,
+          account: {
+            ...prevUser.account,
+            balance: withdrawResponse.data.new_balance
+          }
+        }));
+  
+        // WebSocket으로 후원 메시지 전송
+        if (wsRef.current) {
+          const donationMessage = {
+            type: 'message',
+            username: user.username,
+            message: `${donationAmount}원 후원하셨습니다!`,
+            timestamp: new Date().toISOString(),
+          };
+          wsRef.current.send(JSON.stringify(donationMessage));
+        }
+        
+        alert('후원이 완료되었습니다!');
+        setDonationAmount('');
+        setIsModalOpen(false);
+      } else {
+        throw new Error('잔액 차감에 실패했습니다.');
       }
+    } catch (error) {
+      console.error('후원 처리 실패:', error);
+      alert('후원 처리 중 오류가 발생했습니다.');
     }
-  );
-};
+    setLoading(false);
+  };
 
-  // 자동 스크롤
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -285,7 +313,6 @@ const handleDonation = () => {
     scrollToBottom();
   }, [messages]);
 
-  // 유저 정보 가져오기
   useEffect(() => {
     const fetchUserInfo = async () => {
       const token = localStorage.getItem('token');
@@ -304,19 +331,16 @@ const handleDonation = () => {
     fetchUserInfo();
   }, []);
 
-  // 채팅방 연결
   useEffect(() => {
     const connectToChat = async () => {
       if (!user || !streamId) return;
 
-      // 먼저 채팅방 생성 시도
       try {
         await apiInstance.post('/create_room', { name: streamId });
       } catch (error) {
         console.log('Room might already exist:', error);
       }
 
-      // WebSocket 연결
       wsRef.current = new WebSocket(`${WS_URL}/ws/${streamId}`);
 
       wsRef.current.onopen = () => {
@@ -375,13 +399,11 @@ const handleDonation = () => {
       <Header />
       <main className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Content */}
           <div className="lg:col-span-3">
             <div className="relative rounded-lg overflow-hidden bg-gray-800">
               <BroadcastPlayer streamUrl={streamUrl} />
             </div>
 
-            {/* Streamer Info */}
             <div className="mt-5 bg-gray-800 rounded-lg p-6 border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -403,12 +425,18 @@ const handleDonation = () => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors"
-                >
-                  <span className="text-white">후원하기</span>
-                </button>
+                  <button
+                    onClick={() => {
+                      if (!user) {
+                        alert('로그인이 필요합니다.');
+                        return;
+                      }
+                      setIsModalOpen(true);
+                    }}
+                    className="flex items-center space-x-2 px-4 py-2 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors"
+                  >
+                    <span className="text-white">후원하기</span>
+                  </button>
                   <button
                     onClick={() => setIsLiked(!isLiked)}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-full ${
@@ -427,7 +455,7 @@ const handleDonation = () => {
               <p className="mt-4 text-white">{title}</p>
               <div className="mt-4 flex items-center space-x-4 text-gray-400">
                 <div className="">[테스터] 감기 조심 하십쇼 여러분</div>
-                <div className="flex items-center ">
+                <div className="flex items-center">
                   <Users size={18} className="mr-2" />
                   <span>{viewerCount.toLocaleString()} 시청자</span>
                 </div>
@@ -435,7 +463,6 @@ const handleDonation = () => {
             </div>
           </div>
 
-          {/* Chat Section */}
           <div className="lg:col-span-1">
             <div className="bg-gray-800 rounded-lg h-[calc(100vh-200px)] flex flex-col border">
               <div className="p-4 border-b border-gray-700">
@@ -450,41 +477,20 @@ const handleDonation = () => {
                 </div>
               </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-              {messages.map((msg, index) => (
-                <ChatMessage
-                  key={index}
-                  username={msg.username}
-                  message={msg.message}
-                  timestamp={msg.timestamp}
-                  isCurrentUser={user && msg.username === user.username}
-                  filterResult={msg.filter_result}  // 필터 결과 추가
-                />
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
+              <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+                {messages.map((msg, index) => (
+                  <ChatMessage
+                    key={index}
+                    username={msg.username}
+                    message={msg.message}
+                    timestamp={msg.timestamp}
+                    isCurrentUser={user && msg.username === user.username}
+                    filterResult={msg.filter_result}
+                  />
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
 
-{/* Chat Section의 Messages와 Input 사이에 추가 */}
-{user && (
-  <div className="px-4 py-2 border-t border-gray-700">
-    <div className="flex items-center space-x-2">
-    <div className="mb-2 text-gray-300 text-sm">
-            현재 잔액: ₩{parseFloat(user.account?.balance || 0).toLocaleString()}
-          </div>
-      <input
-        type="number"
-        value={donationAmount}
-        onChange={(e) => setDonationAmount(e.target.value)}
-        placeholder="후원 금액 (원)"
-        className="flex-1 px-4 py-2 bg-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        disabled={loading}
-      />
-    </div>
-  </div>
-)}
-
-              {/* Input */}
               {user ? (
                 <div className="p-4 border-t border-gray-700">
                   <div className="flex items-center space-x-2">
@@ -513,21 +519,22 @@ const handleDonation = () => {
           </div>
         </div>
       </main>
-      <DonationModal
-  isOpen={isModalOpen}
-  onClose={() => {
-    setIsModalOpen(false);
-    setDonationAmount('');
-  }}
-  onDonate={() => {
-    handleDonation();
-    setIsModalOpen(false);
-  }}
-  currentBalance={user?.account?.balance || 0}
-  donationAmount={donationAmount}
-  setDonationAmount={setDonationAmount}
-  loading={loading}
-/>
+
+      {user && (
+        <DonationModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setDonationAmount('');
+          }}
+          onDonate={handleDonation}
+          onCharge={handleCharge}
+          currentBalance={user?.account?.balance || 0}
+          donationAmount={donationAmount}
+          setDonationAmount={setDonationAmount}
+          loading={loading}
+        />
+      )}
     </div>
   );
 };
