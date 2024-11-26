@@ -4,7 +4,7 @@ import axios from 'axios';
 
 
 const apiInstance = axios.create({
-  baseURL: 'http://localhost:8001',
+  baseURL: 'http://52.79.158.113:8001',
 });
 
 const UserProfile = ({ user, onLogout }) => {
