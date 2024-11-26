@@ -94,3 +94,22 @@ class UserRepository:
         query = select(User).options(joinedload(User.account)).where(User.id == user_id)
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
+    
+    async def withdraw_balance(self, user_id: int, amount: Decimal) -> Account:
+        account = await self.get_user_with_account(user_id)
+        if account is None or account.account is None:
+            raise HTTPException(status_code=404, detail="Account not found")
+        
+        if account.account.balance < amount:
+            raise HTTPException(status_code=400, detail="Insufficient balance")
+        
+        account.account.balance -= amount
+        
+        try:
+            await self._session.commit()
+            await self._session.refresh(account.account)
+        except IntegrityError as e:
+            await self._session.rollback()
+            raise HTTPException(status_code=400, detail="Database integrity error: " + str(e))
+        
+        return account.account

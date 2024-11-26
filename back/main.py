@@ -97,6 +97,15 @@ async def charge_account(
     user_service = UserService(db)
     return await user_service.top_up_account(current_user.id, charge_data)
 
+@app.post("/withdraw", response_model=TopUpResponseDTO)
+async def withdraw_account(
+    withdraw_data: TopUpDTO,
+    current_user: User = Depends(AuthService.get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    user_service = UserService(db)
+    return await user_service.withdraw_account(current_user.id, withdraw_data)
+
 @app.get("/protected")
 async def protected_route(current_user: User = Depends(AuthService.get_current_active_user)):
     return {"message": "This is a protected route", "user": current_user.username}
@@ -126,7 +135,7 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str):
                     "score": score
                 }
 
-                await broadcast(room_name, data, rooms)
+                await broadcast(room_name, data,rooms)
     except WebSocketDisconnect:
         rooms[room_name].remove(websocket)
         if not rooms[room_name]:
@@ -168,7 +177,7 @@ async def get_streams():
                     })
                     broadcast_info[room_key]['startTime'] = stream.get('startTime')
     return broadcast_info
-
+    
 @app.post("/add_stream_key", status_code=status.HTTP_201_CREATED)
 async def add_stream_key(_payload: StreamKeyDTO, db: AsyncSession = Depends(get_db)
                          , current_user: User = Depends(AuthService.get_current_active_user)):
@@ -199,6 +208,15 @@ async def add_stream_key(_payload: StreamKeyDTO, db: AsyncSession = Depends(get_
     rooms[_payload.streamKey] = []
     print(broadcast_info)
     return broadcast_info
+
+# main.py - 새로운 엔드포인트 추가
+@app.post("/stream_ended")
+async def stream_ended(stream_data: dict):
+    stream_key = stream_data.get('streamKey')
+    if stream_key and stream_key in broadcast_info:
+        del broadcast_info[stream_key]
+        return {"success": True, "message": f"Stream {stream_key} removed from broadcast_info"}
+    return {"success": False, "message": "Stream key not found"}
 
 @app.get("/search")
 async def getBroadCastInfo(query:str):
