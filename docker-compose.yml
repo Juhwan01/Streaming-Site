@@ -10,7 +10,7 @@ services:
   backend:
     build: ./back
     ports:
-      - "8000:8000"
+      - "8001:8001"
     environment:
       - HUGGINGFACEHUB_API_TOKEN=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
       - OPENAI_API_KEY=sk-i-am-a-god-00-lNQMyFRBXVZpxEe30Pj5T3BlbkFJ5ugtir9bzhPUW15KMqnv
