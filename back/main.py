@@ -97,6 +97,15 @@ async def charge_account(
     user_service = UserService(db)
     return await user_service.top_up_account(current_user.id, charge_data)
 
+@app.post("/withdraw", response_model=TopUpResponseDTO)
+async def withdraw_account(
+    withdraw_data: TopUpDTO,
+    current_user: User = Depends(AuthService.get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    user_service = UserService(db)
+    return await user_service.withdraw_account(current_user.id, withdraw_data)
+
 @app.get("/protected")
 async def protected_route(current_user: User = Depends(AuthService.get_current_active_user)):
     return {"message": "This is a protected route", "user": current_user.username}
@@ -126,7 +135,7 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str):
                     "score": score
                 }
 
-                await broadcast(room_name, data, rooms)
+                await broadcast(room_name, data,rooms)
     except WebSocketDisconnect:
         rooms[room_name].remove(websocket)
         if not rooms[room_name]:
