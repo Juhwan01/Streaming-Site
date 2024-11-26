@@ -150,45 +150,24 @@ async def get_streams():
         async with httpx.AsyncClient() as client:
             response = await client.get("http://3.36.103.8:3001/streams")
             room_dt = response.json()
-            
-        # 활성 스트림 키 목록
-        active_stream_keys = {stream['streamKey'] for stream in room_dt.get('activeStreams', [])}
-        
-        # 비활성 스트림 제거
-        keys_to_remove = []
-        for key in broadcast_info:
-            if key not in active_stream_keys:
-                keys_to_remove.append(key)
-                # rooms에서도 제거
-                if key in rooms:
-                    for websocket in rooms[key]:
-                        try:
-                            await websocket.close()
-                        except:
-                            pass
-                    del rooms[key]
-        
-        # broadcast_info에서 제거
-        for key in keys_to_remove:
-            del broadcast_info[key]
-
-        # 활성 스트림 정보 업데이트
-        for stream in room_dt.get('activeStreams', []):
-            room_key = stream.get('streamKey')
-            if room_key in broadcast_info:
-                broadcast_info[room_key]['broadcast_data'] = [{
-                    'status': stream.get('status'),
-                    'startTime': stream.get('startTime')
-                }]
-                broadcast_info[room_key]['startTime'] = stream.get('startTime')
-
-        return broadcast_info
-        
     except httpx.RequestError as e:
         raise HTTPException(
             status_code=500,
             detail=str(e)
         )
+    print(broadcast_info)
+    print(room_dt)
+    for key in broadcast_info.keys():
+       if broadcast_info[key]['broadcast_data'] == []:
+           for stream in room_dt.get('activeStreams', []):
+                room_key = stream.get('streamKey')
+                if room_key in broadcast_info:
+                    broadcast_info[room_key].setdefault('broadcast_data', []).append({
+                        'status': stream.get('status'),
+                        'startTime': stream.get('startTime')
+                    })
+                    broadcast_info[room_key]['startTime'] = stream.get('startTime')
+    return broadcast_info
     
 @app.post("/add_stream_key", status_code=status.HTTP_201_CREATED)
 async def add_stream_key(_payload: StreamKeyDTO, db: AsyncSession = Depends(get_db)
