@@ -55,3 +55,9 @@ class ChatMessage(BaseModel):
     type: str
     username: str
     message: str = None
+
+class StreamKeyDTO(BaseModel):
+    streamKey: str
+    tags:list[str]
+    title:str
+    contents:str
