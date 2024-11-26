@@ -55,7 +55,7 @@ const nms = new NodeMediaServer(config);
 
 // Express 앱 설정
 const app = express();
-const PORT = 3000;
+const PORT = 3001;
 app.use(cors({
   origin: '*',  // 모든 도메인에서 요청을 허용
   methods: ['GET', 'POST', 'PUT', 'DELETE'],  // 허용할 HTTP 메서드 설정

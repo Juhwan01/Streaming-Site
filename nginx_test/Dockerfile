@@ -15,7 +15,7 @@ RUN npm install
 COPY . .
 
 # 포트 설정
-EXPOSE 1935 8000 3000
+EXPOSE 1935 8001 3001
 
 # 컨테이너 시작 시 실행할 명령어
 CMD ["node", "server.js"]
