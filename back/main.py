@@ -200,6 +200,15 @@ async def add_stream_key(_payload: StreamKeyDTO, db: AsyncSession = Depends(get_
     print(broadcast_info)
     return broadcast_info
 
+# main.py - 새로운 엔드포인트 추가
+@app.post("/stream_ended")
+async def stream_ended(stream_data: dict):
+    stream_key = stream_data.get('streamKey')
+    if stream_key and stream_key in broadcast_info:
+        del broadcast_info[stream_key]
+        return {"success": True, "message": f"Stream {stream_key} removed from broadcast_info"}
+    return {"success": False, "message": "Stream key not found"}
+
 @app.get("/search")
 async def getBroadCastInfo(query:str):
     for stream_key, stream_data in broadcast_info.items():
