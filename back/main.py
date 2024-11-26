@@ -114,7 +114,7 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str):
             
             if chat_message.type == 'join':
                 join_message = f"{chat_message.username} has joined the room."
-                await broadcast(room_name, {"type": "system", "message": join_message})
+                await broadcast(room_name, {"type": "system", "message": join_message}, rooms)
             elif chat_message.type == 'message':
                 category, score = await check_content(chat_message.message)
                 
@@ -126,7 +126,7 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str):
                     "score": score
                 }
 
-                await broadcast(room_name, data)
+                await broadcast(room_name, data, rooms)
     except WebSocketDisconnect:
         rooms[room_name].remove(websocket)
         if not rooms[room_name]:
