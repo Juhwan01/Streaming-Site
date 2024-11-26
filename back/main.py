@@ -14,7 +14,9 @@ from domains.users.services import UserService
 from dependencies.auth import AuthService
 from fastapi import BackgroundTasks
 from fastapi.concurrency import run_in_threadpool
+from Levenshtein import ratio
 import httpx, shutil
+
 app = FastAPI()
 rooms = {}
 broadcast_info = {}
@@ -194,6 +196,18 @@ async def add_stream_key(_payload: StreamKeyDTO, db: AsyncSession = Depends(get_
     rooms[_payload.streamKey] = []
     print(broadcast_info)
     return broadcast_info
+
+@app.get("/search")
+async def getBroadCastInfo(query:str):
+    for stream_key, stream_data in broadcast_info.items():
+        querysim = []
+        querysim.append(ratio(stream_data['nickname'], query))
+        querysim.append(ratio(stream_data['title'], query))
+        for tag in stream_data['tag']:
+            querysim.append(ratio(tag, query))
+        for sim in querysim:
+            if sim >= 0.6:
+                return stream_key
 
 if __name__ == "__main__":
     import uvicorn
