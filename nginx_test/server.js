@@ -1,8 +1,7 @@
 const express = require('express');
 const NodeMediaServer = require('node-media-server');
-const path = require('path');
-const fs = require('fs');
 const cors = require('cors');
+const crypto = require('crypto');
 
 // 허용된 스트리밍 키 목록
 const VALID_STREAM_KEYS = new Set([
@@ -56,11 +55,14 @@ const nms = new NodeMediaServer(config);
 // Express 앱 설정
 const app = express();
 const PORT = 3001;
+
+// CORS 설정
 app.use(cors({
-  origin: '*',  // 모든 도메인에서 요청을 허용
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],  // 허용할 HTTP 메서드 설정
-  allowedHeaders: ['Content-Type', 'Authorization'],  // 허용할 헤더 설정
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
 // JSON 요청 본문 처리 미들웨어
 app.use(express.json());
 
@@ -75,13 +77,17 @@ function getStreamKeyFromPath(streamPath) {
   return parts[parts.length - 1];
 }
 
+// 스트리밍 키 생성 함수
+function generateStreamKey() {
+  return crypto.randomBytes(16).toString('hex');  // 랜덤 16바이트 문자열을 생성하여 스트리밍 키로 반환
+}
+
 // 스트리밍 시작 이벤트
 nms.on('postPublish', (id, StreamPath, args) => {
   console.log('[postPublish] StreamPath:', StreamPath);
   const streamKey = getStreamKeyFromPath(StreamPath);
 
   if (streamKey) {
-    // 스트리밍 상태 초기화
     activeStreams.set(streamKey, { status: 'live', startTime: new Date() });
     console.log(`[postPublish] ${streamKey} 방송 시작`);
   } else {
@@ -95,8 +101,9 @@ nms.on('donePublish', (id, StreamPath, args) => {
   const streamKey = getStreamKeyFromPath(StreamPath);
 
   if (streamKey) {
-    activeStreams.delete(streamKey);
-    console.log(`[donePublish] ${streamKey} 방송 종료`);
+    activeStreams.delete(streamKey);  // 방송 종료 시 스트리밍 키 삭제
+    VALID_STREAM_KEYS.delete(streamKey);  // 스트리밍 키 목록에서 삭제
+    console.log(`[donePublish] ${streamKey} 방송 종료 및 스트리밍 키 삭제`);
   } else {
     console.error('[donePublish] Invalid StreamKey for StreamPath:', StreamPath);
   }
@@ -122,8 +129,8 @@ app.get('/streams', (req, res) => {
     const { status, startTime } = info;
     return {
       streamKey,
-      status, // 방송 상태
-      startTime // 방송 시작 시간
+      status,
+      startTime
     };
   });
 
@@ -146,11 +153,12 @@ app.post('/stream-key', (req, res) => {
   res.status(201).json({ message: '스트리밍 키가 성공적으로 추가되었습니다.', streamKey });
 });
 
-// Express 라우팅 예시
-app.get('/', (req, res) => {
-  res.send('미디어 서버에 오신 것을 환영합니다!');
+app.get('/stream-keys', (req, res) => {
+  // 현재 유효한 스트리밍 키 목록을 배열 형태로 반환
+  res.json({
+    streamKeys: Array.from(VALID_STREAM_KEYS)
+  });
 });
-
 // 서버 시작
 nms.run();
 app.listen(PORT, () => {
