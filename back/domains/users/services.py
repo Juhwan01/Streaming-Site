@@ -1,3 +1,4 @@
+from sqlite3 import IntegrityError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -123,3 +124,26 @@ class UserService:
         if not current_user.is_active:
             raise HTTPException(status_code=400, detail="Inactive user")
         return current_user
+    
+    async def withdraw_account(self, user_id: int, withdraw_data: TopUpDTO) -> TopUpResponseDTO:
+        user_with_account = await self._repository.get_user_with_account(user_id)
+        if not user_with_account or user_with_account.account is None:
+            raise HTTPException(status_code=404, detail="Account not found")
+        
+        if user_with_account.account.balance < withdraw_data.amount:
+            raise HTTPException(status_code=400, detail="Insufficient balance")
+        
+        user_with_account.account.balance -= withdraw_data.amount
+        
+        try:
+            await self._repository._session.commit()
+            await self._repository._session.refresh(user_with_account.account)
+        except IntegrityError as e:
+            await self._repository._session.rollback()
+            raise HTTPException(status_code=400, detail="Database integrity error: " + str(e))
+        
+        return TopUpResponseDTO(
+            message="Account withdrawn successfully",
+            new_balance=user_with_account.account.balance,
+            amount=withdraw_data.amount
+        )
