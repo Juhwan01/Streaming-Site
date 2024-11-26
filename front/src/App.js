@@ -6,10 +6,10 @@ import ChatRoom from './components/ChatRoom';
 import UserProfile from './components/UserProfile';
 import "../src/index.css";
 
-const WS_URL = 'ws://52.79.158.113:8001';
+const WS_URL = 'ws://3.36.103.8:8001';
 
 const apiInstance = axios.create({
-  baseURL: 'http://52.79.158.113:8001',
+  baseURL: 'http://3.36.103.8:8001',
 });
 
 export default function App() {

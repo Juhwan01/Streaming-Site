@@ -3,8 +3,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
 import Header from "@/components/Header";
-import { MessageSquare, Users, Share2, Heart } from "lucide-react";
+import { MessageSquare, Users, Share2, Heart, Send } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import axios from "axios";
+
+const apiInstance = axios.create({
+  baseURL: 'http://3.36.103.8:8001',
+});
+
+const WS_URL = 'ws://3.36.103.8:8001';
 
 const TagButton = ({ tags }) => {
   return (
@@ -15,7 +22,6 @@ const TagButton = ({ tags }) => {
 };
 
 const BroadcastPlayer = ({ streamUrl }) => {
-  // BroadcastPlayer 컴포넌트 코드는 동일
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
 
@@ -50,9 +56,7 @@ const BroadcastPlayer = ({ streamUrl }) => {
             }
           }
         });
-      } else if (
-        videoRef.current.canPlayType("application/vnd.apple.mpegurl")
-      ) {
+      } else if (videoRef.current.canPlayType("application/vnd.apple.mpegurl")) {
         videoRef.current.src = streamUrl;
       }
     }
@@ -73,24 +77,128 @@ const BroadcastPlayer = ({ streamUrl }) => {
   );
 };
 
-const ChatMessage = ({ username, message }) => (
-  <div className="px-4 py-2 hover:bg-gray-800 transition-colors">
-    <span className="text-purple-400 font-medium">{username}</span>
+const ChatMessage = ({ username, message, timestamp, isCurrentUser }) => (
+  <div className={`px-4 py-2 hover:bg-gray-700 transition-colors ${isCurrentUser ? 'bg-gray-700' : ''}`}>
+    <span className={`${isCurrentUser ? 'text-blue-400' : 'text-purple-400'} font-medium`}>{username}</span>
     <span className="text-gray-300 ml-2">{message}</span>
+    {timestamp && (
+      <span className="text-xs text-gray-500 ml-2">
+        {new Date(timestamp).toLocaleTimeString()}
+      </span>
+    )}
   </div>
 );
 
 const Broadcast = () => {
-  // URL 쿼리 파라미터에서 데이터 가져오기
   const searchParams = useSearchParams();
   const streamId = searchParams.get("streamId");
   const title = searchParams.get("title");
   const nickname = searchParams.get("nickname");
   const profilePic = searchParams.get("profilePic");
-
-  const streamUrl = `http://3.36.103.8:8000/live/${streamId}/index.m3u8`;
+  
   const [viewerCount, setViewerCount] = useState(1234);
   const [isLiked, setIsLiked] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [user, setUser] = useState(null);
+  const wsRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  const streamUrl = `http://3.36.103.8:8000/live/${streamId}/index.m3u8`;
+
+  // 자동 스크롤
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // 유저 정보 가져오기
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        const response = await apiInstance.get('/users/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUser(response.data);
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
+  // 채팅방 연결
+  useEffect(() => {
+    const connectToChat = async () => {
+      if (!user || !streamId) return;
+
+      // 먼저 채팅방 생성 시도
+      try {
+        await apiInstance.post('/create_room', { name: streamId });
+      } catch (error) {
+        console.log('Room might already exist:', error);
+      }
+
+      // WebSocket 연결
+      wsRef.current = new WebSocket(`${WS_URL}/ws/${streamId}`);
+
+      wsRef.current.onopen = () => {
+        console.log('WebSocket Connected');
+        wsRef.current.send(JSON.stringify({
+          type: 'join',
+          username: user.username
+        }));
+      };
+
+      wsRef.current.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        setMessages(prev => [...prev, data]);
+      };
+
+      wsRef.current.onerror = (error) => {
+        console.error('WebSocket Error:', error);
+      };
+
+      wsRef.current.onclose = () => {
+        console.log('WebSocket Closed');
+      };
+    };
+
+    connectToChat();
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [user, streamId]);
+
+  const sendMessage = () => {
+    if (!inputMessage.trim() || !wsRef.current || !user) return;
+
+    const messageData = {
+      type: 'message',
+      username: user.username,
+      message: inputMessage,
+      timestamp: new Date().toISOString(),
+    };
+
+    wsRef.current.send(JSON.stringify(messageData));
+    setInputMessage('');
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -131,10 +239,7 @@ const Broadcast = () => {
                       isLiked ? "bg-red-600" : "bg-gray-700"
                     } hover:bg-red-700 transition-colors`}
                   >
-                    <Heart
-                      className={isLiked ? "fill-current" : ""}
-                      size={20}
-                    />
+                    <Heart className={isLiked ? "fill-current" : ""} size={20} />
                     <span className="text-white">좋아요</span>
                   </button>
                   <button className="flex items-center space-x-2 px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors">
@@ -155,8 +260,8 @@ const Broadcast = () => {
           </div>
 
           {/* Chat Section */}
-          <div className="lg:col-span-1 ">
-            <div className="bg-gray-800 rounded-lg h-full flex flex-col border">
+          <div className="lg:col-span-1">
+            <div className="bg-gray-800 rounded-lg h-[calc(100vh-200px)] flex flex-col border">
               <div className="p-4 border-b border-gray-700">
                 <div className="flex items-center justify-between">
                   <h2 className="text-white font-semibold flex items-center">
@@ -168,24 +273,46 @@ const Broadcast = () => {
                   </span>
                 </div>
               </div>
+
+              {/* Messages */}
               <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-                <ChatMessage username="User123" message="안녕하세요!" />
-                <ChatMessage
-                  username="Gamer456"
-                  message="브론즈 화이팅입니다!"
-                />
-                <ChatMessage
-                  username="Stream789"
-                  message="오늘도 재미있는 방송 감사합니다 ㅎㅎ"
-                />
+                {messages.map((msg, index) => (
+                  <ChatMessage
+                    key={index}
+                    username={msg.username}
+                    message={msg.message}
+                    timestamp={msg.timestamp}
+                    isCurrentUser={user && msg.username === user.username}
+                  />
+                ))}
+                <div ref={messagesEndRef} />
               </div>
-              <div className="p-4 border-t border-gray-700">
-                <input
-                  type="text"
-                  placeholder="메시지 보내기..."
-                  className="w-full px-4 py-2 bg-gray-700 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
+
+              {/* Input */}
+              {user ? (
+                <div className="p-4 border-t border-gray-700">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="메시지 보내기..."
+                      className="flex-1 px-4 py-2 bg-gray-700 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                    <button
+                      onClick={sendMessage}
+                      className="p-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white focus:outline-none"
+                    >
+                      <Send size={20} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 border-t border-gray-700 text-center text-gray-400">
+                  채팅에 참여하려면 로그인이 필요합니다
+                </div>
+              )}
             </div>
           </div>
         </div>

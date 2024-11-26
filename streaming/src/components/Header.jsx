@@ -25,6 +25,19 @@ const Header = ({ sideBarOpen, setSideBarOpen }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     setToken(token);
+
+    // 브라우저가 종료되거나 페이지를 벗어날 때 로컬스토리지에서 토큰 삭제
+    const handleBeforeUnload = () => {
+      localStorage.removeItem('token');
+    };
+
+    // beforeunload 이벤트 리스너 등록
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // 클린업 함수로 리스너 제거
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, []);
 
   const handleLogout = () => {
