@@ -157,13 +157,16 @@ async def get_streams():
         )
     print(broadcast_info)
     print(room_dt)
-    for stream in room_dt.get('activeStreams', []):
-        room_key = stream.get('streamKey')
-        if room_key in broadcast_info:
-            broadcast_info[room_key].setdefault('broadcast_data', []).append({
-                'status': stream.get('status'),
-                'startTime': stream.get('startTime')
-            })
+    for key in broadcast_info.keys():
+       if broadcast_info[key]['broadcast_data'] == []:
+           for stream in room_dt.get('activeStreams', []):
+                room_key = stream.get('streamKey')
+                if room_key in broadcast_info:
+                    broadcast_info[room_key].setdefault('broadcast_data', []).append({
+                        'status': stream.get('status'),
+                        'startTime': stream.get('startTime')
+                    })
+                    broadcast_info[room_key]['startTime'] = stream.get('startTime')
     return broadcast_info
 
 @app.post("/add_stream_key", status_code=status.HTTP_201_CREATED)
