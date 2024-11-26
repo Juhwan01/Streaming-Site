@@ -4,9 +4,14 @@ import Login from './components/Login';
 import RoomList from './components/RoomList';
 import ChatRoom from './components/ChatRoom';
 import UserProfile from './components/UserProfile';
-const BASE_URL = 'http://13.210.70.181:8000';
+import "../src/index.css";
 
-const WS_URL = 'ws://13.210.70.181:8000';
+const WS_URL = 'ws://localhost:8000';
+
+const apiInstance = axios.create({
+  baseURL: 'http://localhost:8001',
+});
+
 export default function App() {
   const [token, setToken] = useState('');
   const [user, setUser] = useState(null);
@@ -45,7 +50,9 @@ export default function App() {
   const fetchUserInfo = async (currentToken) => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`${BASE_URL}/users/me`, {
+
+
+      const response = await apiInstance.get('/users/me', {
         headers: { Authorization: `Bearer ${currentToken}` }
       });
       console.log('User info received:', response.data);  // 이 부분을 통해 실제 데이터 구조 확인
@@ -60,7 +67,7 @@ export default function App() {
 
   const fetchRooms = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/get_rooms`);
+      const response = await apiInstance.get('/get_rooms');
       setRooms(response.data);
     } catch (error) {
       console.error('Error fetching rooms:', error);
@@ -69,7 +76,7 @@ export default function App() {
 
   const handleLogin = async (username, password) => {
     try {
-      const response = await axios.post(`${BASE_URL}/login`, 
+      const response = await apiInstance.post('/login', 
         `username=${username}&password=${password}`,
         {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
@@ -96,7 +103,7 @@ export default function App() {
 
   const createRoom = async (roomName) => {
     try {
-      await axios.post(`${BASE_URL}/create_room`, { name: roomName });
+      await apiInstance.post('/create_room', { name: roomName });
       fetchRooms();
     } catch (error) {
       console.error('Error creating room:', error);
@@ -129,7 +136,7 @@ export default function App() {
 
   const handleTopup = async (amount) => {
     try {
-      const response = await axios.post(`${BASE_URL}/charge`, { amount }, {
+      const response = await apiInstance.post('/charge', { amount }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUser({ ...user, balance: response.data.new_balance });

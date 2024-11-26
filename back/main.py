@@ -130,10 +130,14 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str):
         if not rooms[room_name]:
             del rooms[room_name]
 
+@app.get("/get_rooms")
+async def get_rooms():
+    return list(rooms.keys())
+
 @app.post("/create_room")
 async def create_room(payload: RoomCreateRequest):
     if payload.name not in rooms:
-        
+        rooms[payload.name] = []
         return {"success": True, "message": f"Room '{payload.name}' created successfully"}
     else:
         return {"success": False, "message": f"Room '{payload.name}' already exists"}

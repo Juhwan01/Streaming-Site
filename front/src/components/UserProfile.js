@@ -3,7 +3,9 @@ import { DollarSign, LogOut } from 'lucide-react';
 import axios from 'axios';
 
 
-const API_URL = 'http://13.210.70.181:8000';
+const apiInstance = axios.create({
+  baseURL: 'http://localhost:8001',
+});
 
 const UserProfile = ({ user, onLogout }) => {
   const [topupAmount, setTopupAmount] = useState('');
@@ -56,7 +58,7 @@ const UserProfile = ({ user, onLogout }) => {
         if (rsp.success) {
           try {
             const token = localStorage.getItem('token');
-            const response = await axios.post(`${API_URL}/charge`, {
+            const response = await apiInstance.post('/charge', {
               amount: rsp.paid_amount,
               imp_uid: rsp.imp_uid,
               merchant_uid: rsp.merchant_uid
