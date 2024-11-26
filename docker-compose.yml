@@ -1,18 +1,12 @@
 services:
-  frontend:
+  rtmp:
     build: 
-      context: ./front
+      context: ./nginx_test
     ports:
-      - "80:3000"
-    depends_on:
-      - backend
+      - "8000:8000"
 
   backend:
     build: ./back
     ports:
       - "8001:8001"
-    environment:
-      - HUGGINGFACEHUB_API_TOKEN=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
-      - OPENAI_API_KEY=sk-i-am-a-god-00-lNQMyFRBXVZpxEe30Pj5T3BlbkFJ5ugtir9bzhPUW15KMqnv
-      - GITHUB_TOKEN=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
-      - GITHUB_USERNAME=Juhwan01
+

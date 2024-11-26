@@ -45,7 +45,7 @@ async def upload_image(file: UploadFile = File(...)):
         file_location = f"./img/{file.filename}"
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        return {"image_url": f"http://localhost:8000/img/{file.filename}"}
+        return {"image_url": f"http://3.36.103.8:8000/img/{file.filename}"}
     except Exception as e:
         return JSONResponse(content={"message": f"Error: {str(e)}"}, status_code=400)
 
@@ -148,7 +148,7 @@ async def create_room(payload: RoomCreateRequest):
 async def get_streams():
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get("http://localhost:3001/streams")
+            response = await client.get("http://3.36.103.8:3001/streams")
             room_dt = response.json()
     except httpx.RequestError as e:
         raise HTTPException(
@@ -172,7 +172,7 @@ async def get_streams():
 @app.post("/add_stream_key", status_code=status.HTTP_201_CREATED)
 async def add_stream_key(_payload: StreamKeyDTO, db: AsyncSession = Depends(get_db)
                          , current_user: User = Depends(AuthService.get_current_active_user)):
-    url = "http://localhost:3001/stream-key"
+    url = "http://3.36.103.8:3001/stream-key"
     print(1)
     payload = {"streamKey": _payload.streamKey}
     try:
