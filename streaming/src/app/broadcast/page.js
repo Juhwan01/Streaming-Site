@@ -1,22 +1,21 @@
-"use client";
+'use client';
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, Suspense } from "react";
 import Hls from "hls.js";
 import Header from "@/components/Header";
 import { MessageSquare, Users, Share2, Heart, Send } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
-import { Suspense } from "react";
-
-// 정적 페이지 생성 비활성화
-export const dynamic = 'force-dynamic';
 
 const apiInstance = axios.create({
-  baseURL: '/api',
+  baseURL: '/api'  // 수정된 부분
 });
 
-const WS_URL = '/socket';
+const WS_URL = process.env.NODE_ENV === 'production' 
+  ? `wss://${window.location.host}/socket`
+  : 'ws://3.36.103.8:8001';
 
+// 기존 컴포넌트들은 그대로 유지
 const TagButton = ({ tags }) => {
   return (
     <div className="min-w-20 max-w-40 h-1/2 flex items-center justify-center bg-slate-700 rounded-2xl ml-5 p-2 text-white text-xl">
@@ -164,6 +163,7 @@ const DonationModal = ({ isOpen, onClose, onDonate, onCharge, currentBalance, do
   );
 };
 
+// 새로운 BroadcastContent 컴포넌트
 const BroadcastContent = () => {
   const searchParams = useSearchParams();
   const streamId = searchParams.get("streamId");
@@ -182,7 +182,7 @@ const BroadcastContent = () => {
   const wsRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  const streamUrl = `/stream/live/${streamId}/index.m3u8`;
+  const streamUrl = `/stream/live/${streamId}/index.m3u8`;  // 수정된 부분
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -264,7 +264,6 @@ const BroadcastContent = () => {
     try {
       const token = localStorage.getItem('token');
       
-      // 잔액 차감 API 호출
       const withdrawResponse = await apiInstance.post('/withdraw', {
         amount: parseInt(donationAmount)
       }, {
@@ -274,9 +273,7 @@ const BroadcastContent = () => {
         }
       });
   
-      // 차감이 성공했는지 확인
       if (withdrawResponse.data && withdrawResponse.data.new_balance !== undefined) {
-        // 새로운 잔액으로 유저 정보 업데이트
         setUser(prevUser => ({
           ...prevUser,
           account: {
@@ -285,7 +282,6 @@ const BroadcastContent = () => {
           }
         }));
   
-        // WebSocket으로 후원 메시지 전송
         if (wsRef.current) {
           const donationMessage = {
             type: 'message',
@@ -345,32 +341,48 @@ const BroadcastContent = () => {
         console.log('Room might already exist:', error);
       }
 
-      wsRef.current = new WebSocket(`${WS_URL}/ws/${streamId}`);
+      // WebSocket URL을 환경에 따라 동적으로 설정
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsPath = process.env.NODE_ENV === 'production'
+        ? `${wsProtocol}//${window.location.host}/socket/ws/${streamId}`
+        : `${WS_URL}/ws/${streamId}`;
 
+      wsRef.current = new WebSocket(wsPath);
+
+      // WebSocket이 연결되면 실행
       wsRef.current.onopen = () => {
         console.log('WebSocket Connected');
+        // 연결 후 조인 메시지 전송
         wsRef.current.send(JSON.stringify({
           type: 'join',
           username: user.username
         }));
       };
 
+      // 메시지 수신 시 실행
       wsRef.current.onmessage = (event) => {
         const data = JSON.parse(event.data);
         setMessages(prev => [...prev, data]);
       };
 
+      // 에러 발생 시 실행
       wsRef.current.onerror = (error) => {
         console.error('WebSocket Error:', error);
+        // 에러 발생 시 재연결 시도
+        setTimeout(connectToChat, 3000);
       };
 
+      // 연결이 닫힐 때 실행
       wsRef.current.onclose = () => {
         console.log('WebSocket Closed');
+        // 연결이 끊어졌을 때 재연결 시도
+        setTimeout(connectToChat, 3000);
       };
     };
 
     connectToChat();
 
+    // 컴포넌트 언마운트 시 WebSocket 연결 종료
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
@@ -543,6 +555,7 @@ const BroadcastContent = () => {
   );
 };
 
+// 메인 Broadcast 컴포넌트
 const Broadcast = () => {
   return (
     <Suspense fallback={
@@ -554,6 +567,5 @@ const Broadcast = () => {
     </Suspense>
   );
 };
-
 
 export default Broadcast;

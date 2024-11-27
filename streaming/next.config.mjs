@@ -10,13 +10,32 @@ const nextConfig = {
         destination: 'http://3.36.103.8:8001/:path*'
       },
       {
-        source: '/stream/:path*',  // 8000포트용 경로
+        source: '/stream/:path*',
         destination: 'http://3.36.103.8:8000/:path*'
       },
       {
-        source: '/socket/:path*',  // 8000포트용 경로
-        destination: 'ws://3.36.103.8:8001/:path*',
-        basePath: false
+        source: '/socket/:path*',
+        destination: 'http://3.36.103.8:8001/:path*'
+      }
+    ]
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.iamport.kr",
+              "connect-src 'self' ws: wss: http: https:",
+              "img-src 'self' blob: data:",
+              "media-src 'self' blob:",
+              "upgrade-insecure-requests",
+            ].join('; ')
+          }
+        ]
       }
     ]
   }
