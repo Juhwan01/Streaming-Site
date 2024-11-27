@@ -37,8 +37,8 @@ COPY --from=builder /app/node_modules ./node_modules
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Expose port
-EXPOSE 3000
+# Expose port 80
+EXPOSE 80
 
 # Start the application
 CMD ["yarn", "start"]
