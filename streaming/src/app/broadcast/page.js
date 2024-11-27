@@ -7,6 +7,9 @@ import { MessageSquare, Users, Share2, Heart } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
+// 정적 페이지 생성 비활성화
+export const dynamic = 'force-dynamic';
+
 const TagButton = ({ tags }) => {
   return (
     <div className="min-w-20 max-w-40 h-1/2 flex items-center justify-center bg-slate-700 rounded-2xl ml-5 p-2 text-white text-xl">
@@ -16,7 +19,6 @@ const TagButton = ({ tags }) => {
 };
 
 const BroadcastPlayer = ({ streamUrl }) => {
-  // BroadcastPlayer 컴포넌트 코드는 동일
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
 
@@ -79,8 +81,15 @@ const ChatMessage = ({ username, message }) => (
   </div>
 );
 
-const Broadcast = () => {
-  // URL 쿼리 파라미터에서 데이터 가져오기
+// Loading 컴포넌트
+const LoadingFallback = () => (
+  <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="text-white text-xl">Loading stream...</div>
+  </div>
+);
+
+// 스트림 컨텐츠를 처리하는 컴포넌트
+function StreamContent() {
   const searchParams = useSearchParams();
   const streamId = searchParams.get('streamId');
   const title = searchParams.get('title');
@@ -92,7 +101,6 @@ const Broadcast = () => {
   const [isLiked, setIsLiked] = useState(false);
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
     <div className="min-h-screen bg-gray-900">
       <Header />
       <main className="container mx-auto px-4 py-6">
@@ -145,7 +153,7 @@ const Broadcast = () => {
               </p>
               <div className="mt-4 flex items-center space-x-4 text-gray-400">
                 <div className=''>[테스터] 감기 조심 하십쇼 여러분</div>
-                <div className="flex items-center ">
+                <div className="flex items-center">
                   <Users size={18} className="mr-2" />
                   <span>{viewerCount.toLocaleString()} 시청자</span>
                 </div>
@@ -154,7 +162,7 @@ const Broadcast = () => {
           </div>
 
           {/* Chat Section */}
-          <div className="lg:col-span-1 ">
+          <div className="lg:col-span-1">
             <div className="bg-gray-800 rounded-lg h-full flex flex-col border">
               <div className="p-4 border-b border-gray-700">
                 <div className="flex items-center justify-between">
@@ -182,6 +190,14 @@ const Broadcast = () => {
         </div>
       </main>
     </div>
+  );
+}
+
+// 메인 Broadcast 컴포넌트
+const Broadcast = () => {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <StreamContent />
     </Suspense>
   );
 };
