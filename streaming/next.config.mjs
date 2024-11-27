@@ -8,6 +8,10 @@ const nextConfig = {
       {
         source: '/api/:path*',
         destination: 'http://3.36.103.8:8001/:path*'
+      },
+      {
+        source: '/stream/:path*',  // 8000포트용 경로
+        destination: 'http://3.36.103.8:8000/:path*'
       }
     ]
   }
