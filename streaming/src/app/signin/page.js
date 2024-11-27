@@ -19,7 +19,7 @@ const SignIn = () => {
       formData.append("grant_type", "password");
 
       const response = await axios.post(
-        "http://3.36.103.8:8001/login",
+        "/api/login",  // URL 변경
         formData.toString(),
         {
           headers: {
@@ -36,7 +36,7 @@ const SignIn = () => {
       console.log("에러내용:", error);
     }
   };
-
+  
   return (
     <div className="w-full min-h-screen flex items-center justify-center bg-white p-4">
       <div className="w-full flex flex-col justify-around max-w-md h-auto md:h-[600px] p-4 shadow-xl">
