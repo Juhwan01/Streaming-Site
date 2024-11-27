@@ -27,7 +27,7 @@ const TagButton = ({ tags }) => {
 const BroadcastPlayer = ({ streamUrl }) => {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
-
+  console.log(streamUrl);
   useEffect(() => {
     if (videoRef.current) {
       if (Hls.isSupported()) {
