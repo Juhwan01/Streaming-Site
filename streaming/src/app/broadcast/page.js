@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import { MessageSquare, Users, Share2, Heart, Send } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
+import { Suspense } from "react";
 
 // 정적 페이지 생성 비활성화
 export const dynamic = 'force-dynamic';

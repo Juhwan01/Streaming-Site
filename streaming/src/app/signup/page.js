@@ -43,7 +43,7 @@ const SignUp = () => {
 
     try {
       console.log("이미지 업로드 시작...");
-      const response = await fetch("http://3.36.103.8:8001/upload", {
+      const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
@@ -106,7 +106,7 @@ const SignUp = () => {
 
       // 회원가입 요청
       const response = await axios.post(
-        "http://3.36.103.8:8001/signup",
+        "/api/signup",
         signupData
       );
       console.log("회원가입 성공:", response.data);
