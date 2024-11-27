@@ -64,7 +64,7 @@ const LiveStream = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://3.36.103.8:8001/streams");
+        const response = await axios.get("/api/streams");
         const dataArray = Object.entries(response.data).map(([id, data]) => ({
           id,
           ...data,

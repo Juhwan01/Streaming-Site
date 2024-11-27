@@ -33,7 +33,7 @@ const AddStreamKey = () => {
 
     try {
       const response = await axios.post(
-        "http://3.36.103.8:8001/add_stream_key",
+        "/api/add_stream_key",
         {
           streamKey,
           tags: [selectedGame], // 선택된 게임을 태그 배열로 전송

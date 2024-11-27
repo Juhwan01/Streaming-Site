@@ -48,7 +48,7 @@ const Station = () => {
     const fetchUserInfo = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://3.36.103.8:8001/users/me", {
+        const response = await axios.get("/api/users/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

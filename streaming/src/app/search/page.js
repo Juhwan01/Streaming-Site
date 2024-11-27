@@ -157,7 +157,7 @@ function SearchResults() {
     setError(null);
 
     try {
-      const response = await axios.get("http://3.36.103.8:8001/search", {
+      const response = await axios.get("/api/search", {
         params: { query: searchQuery },
       });
 
