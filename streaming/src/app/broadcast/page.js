@@ -15,7 +15,7 @@ const apiInstance = axios.create({
   baseURL: '/api',
 });
 
-const WS_URL = 'ws://3.36.103.8:8001';
+const WS_URL = '/socket';
 
 const TagButton = ({ tags }) => {
   return (

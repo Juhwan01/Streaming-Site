@@ -12,6 +12,11 @@ const nextConfig = {
       {
         source: '/stream/:path*',  // 8000포트용 경로
         destination: 'http://3.36.103.8:8000/:path*'
+      },
+      {
+        source: '/socket/:path*',  // 8000포트용 경로
+        destination: 'ws://3.36.103.8:8001/:path*',
+        basePath: false
       }
     ]
   }
