@@ -85,7 +85,7 @@ nms.on("donePublish", async (id, StreamPath) => {
     VALID_STREAM_KEYS.delete(streamKey);
     console.log(`[donePublish] ${streamKey} 방송 종료`);
     try {
-      await axios.post("http://3.36.103.8:8001/stream_ended", { streamKey });
+      await axios.post("http://13.209.42.36/stream_ended", { streamKey });
     } catch (error) {
       console.error("[donePublish] Failed to notify stream end:", error);
     }
