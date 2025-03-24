@@ -4,8 +4,14 @@ FROM node:14
 # 작업 디렉토리 생성 및 설정
 WORKDIR /usr/src/app
 
-# ffmpeg 설치
-RUN apt-get update && apt-get install -y ffmpeg && apt-get clean
+# ffmpeg 최신 버전 설치
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:jonathonf/ffmpeg-4 && \
+    apt-get update && \
+    apt-get install -y ffmpeg && \
+    rm -rf /var/lib/apt/lists/* && \
+    ffmpeg -version
 
 # package.json 및 package-lock.json 복사 후 npm install
 COPY package.json package-lock.json ./
