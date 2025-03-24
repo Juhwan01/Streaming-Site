@@ -45,7 +45,7 @@ async def upload_image(file: UploadFile = File(...)):
         file_location = f"./img/{file.filename}"
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        return {"image_url": f"http://3.36.103.8:8000/img/{file.filename}"}
+        return {"image_url": f"http://13.209.42.36:8000/img/{file.filename}"}
     except Exception as e:
         return JSONResponse(content={"message": f"Error: {str(e)}"}, status_code=400)
 
