@@ -1,21 +1,21 @@
-# Node.js 이미지를 기반으로 합니다.
+# Node.js 이미지 기반
 FROM node:14
 
 # 작업 디렉토리 생성 및 설정
 WORKDIR /usr/src/app
 
-# ffmpeg 설치를 위한 추가 패키지 설치
+# ffmpeg 설치
 RUN apt-get update && apt-get install -y ffmpeg && apt-get clean
 
-# package.json 및 package-lock.json을 복사하여 의존성 설치
-COPY package*.json ./
-RUN npm install
+# package.json 및 package-lock.json 복사 후 npm install
+COPY package.json package-lock.json ./
+RUN npm install --only=production
 
-# 애플리케이션 소스 복사
+# 나머지 애플리케이션 소스 복사
 COPY . .
 
-# 포트 설정
+# 포트 노출
 EXPOSE 1935 8000 3001
 
-# 컨테이너 시작 시 실행할 명령어
+# 컨테이너 실행 시 시작할 명령어
 CMD ["node", "server.js"]
