@@ -4,12 +4,12 @@ const cors = require("cors");
 const crypto = require("crypto");
 const axios = require("axios");
 
-let version = "1.0.0"; // 고정 버전 설정
+let version = "4.0.0"; // v4로 버전 업데이트
 global.version = version;
 console.log(`Server Version: ${version}`);
 
 // ffmpeg 버전 전역 설정
-global.ffmpeg_version = "4.0"; // 임의의 ffmpeg 버전 설정
+global.ffmpeg_version = "6.1"; // v4에 필요한 ffmpeg 버전으로 업데이트
 
 const VALID_STREAM_KEYS = new Set(["stream-key-1", "stream-key-2", "test-key"]);
 const activeStreams = new Map();
@@ -27,6 +27,9 @@ const config = {
     port: 8000,
     mediaroot: "./media",
     allow_origin: "*",
+    flv: {  // HTTP-flv 지원 추가 (v4의 새로운 기능)
+      enabled: true
+    }
   },
   trans: {
     ffmpeg: "/usr/bin/ffmpeg",
@@ -35,10 +38,12 @@ const config = {
         app: "live",
         hls: true,
         hlsFlags: "[hls_time=2:hls_list_size=3:hls_flags=delete_segments]",
-        hlsKeep: true, // true로 변경하여 HLS 파일 유지
+        hlsKeep: true,
         dash: true,
         dashFlags: "[f=dash:window_size=3:extra_window_size=5]",
-        dashKeep: true, // true로 변경하여 DASH 파일 유지
+        dashKeep: true,
+        ac: "copy", // 오디오 코덱 복사 옵션 추가
+        vc: "copy", // 비디오 코덱 복사 옵션 추가 (HEVC, VP9, AV1 지원)
         rtmp: true,
         rtmpApp: "live_rtmp",
       },
@@ -92,7 +97,7 @@ nms.on("donePublish", async (id, StreamPath) => {
   }
 });
 
-nms.on("prePublish", (id, StreamPath) => {
+nms.on("prePublish", (id, StreamPath, args) => { // args 매개변수 추가하여 코덱 정보 접근
   const streamKey = getStreamKeyFromPath(StreamPath);
   if (!streamKey || !validateStreamKey(streamKey)) {
     nms.getSession(id).reject();
@@ -152,6 +157,7 @@ try {
   console.log("RTMP 서버: rtmp://localhost:1935/live");
   console.log("HTTP 서버: http://localhost:8000/live");
   console.log("허용된 스트림 키:", Array.from(VALID_STREAM_KEYS));
+  console.log("지원 코덱: H.264, HEVC, VP9, AV1 (적절한 클라이언트 필요)"); // 지원 코덱 정보 추가
 
   const server = app.listen(PORT, () => {
     console.log(`Express 서버가 ${PORT} 포트에서 실행 중입니다.`);
