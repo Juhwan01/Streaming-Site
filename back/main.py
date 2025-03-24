@@ -181,7 +181,7 @@ async def get_streams():
 @app.post("/add_stream_key", status_code=status.HTTP_201_CREATED)
 async def add_stream_key(_payload: StreamKeyDTO, db: AsyncSession = Depends(get_db)
                          , current_user: User = Depends(AuthService.get_current_active_user)):
-    url = "http://3.36.103.8:3001/stream-key"
+    url = "http://13.209.42.36:3001/stream-key"
     print(1)
     payload = {"streamKey": _payload.streamKey}
     try:
