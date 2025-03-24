@@ -3,14 +3,23 @@ const NodeMediaServer = require("node-media-server");
 const cors = require("cors");
 const crypto = require("crypto");
 const axios = require("axios");
-const packageJson = require("./package.json"); // package.json에서 버전 정보 가져오기
 
-const version = packageJson.version;
-console.log(`Server Version: ${version}`);
+let version;
+try {
+  const packageJson = require("./package.json"); // package.json에서 버전 정보 가져오기
+  version = packageJson.version;
+  console.log(`Server Version: ${version}`);
+} catch (error) {
+  console.log("package.json을 찾을 수 없거나 버전 정보가 없습니다.");
+  version = "1.0.0"; // 기본 버전 설정
+  console.log(`기본 Server Version: ${version}`);
+}
+
+// node-media-server에서 참조할 수 있도록 전역 변수로 노출
+global.version = version;
 
 const VALID_STREAM_KEYS = new Set(["stream-key-1", "stream-key-2", "test-key"]);
 const activeStreams = new Map();
-
 const config = {
   rtmp: {
     port: 1935,
@@ -46,23 +55,18 @@ const config = {
     api_pass: "admin123",
   },
 };
-
 const nms = new NodeMediaServer(config);
 const app = express();
 const PORT = 3001;
-
 app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE"], allowedHeaders: ["Content-Type", "Authorization"] }));
 app.use(express.json());
-
 function validateStreamKey(streamKey) {
   return VALID_STREAM_KEYS.has(streamKey);
 }
-
 function getStreamKeyFromPath(streamPath) {
   const parts = streamPath.split("/");
   return parts[parts.length - 1];
 }
-
 nms.on("postPublish", (id, StreamPath) => {
   const streamKey = getStreamKeyFromPath(StreamPath);
   if (streamKey) {
@@ -70,7 +74,6 @@ nms.on("postPublish", (id, StreamPath) => {
     console.log(`[postPublish] ${streamKey} 방송 시작`);
   }
 });
-
 nms.on("donePublish", async (id, StreamPath) => {
   const streamKey = getStreamKeyFromPath(StreamPath);
   if (streamKey) {
@@ -78,13 +81,12 @@ nms.on("donePublish", async (id, StreamPath) => {
     VALID_STREAM_KEYS.delete(streamKey);
     console.log(`[donePublish] ${streamKey} 방송 종료`);
     try {
-      await axios.post("http://3.36.103.8:8001/stream_ended", { streamKey });
+      await axios.post("http://13.209.42.36:8001/stream_ended", { streamKey });
     } catch (error) {
       console.error("[donePublish] Failed to notify stream end:", error);
     }
   }
 });
-
 nms.on("prePublish", (id, StreamPath) => {
   const streamKey = getStreamKeyFromPath(StreamPath);
   if (!streamKey || !validateStreamKey(streamKey)) {
@@ -92,11 +94,9 @@ nms.on("prePublish", (id, StreamPath) => {
     console.log("[prePublish] Invalid StreamKey:", streamKey);
   }
 });
-
 app.get("/streams", (req, res) => {
   res.json({ activeStreams: Array.from(activeStreams.entries()).map(([streamKey, info]) => ({ streamKey, ...info })) });
 });
-
 app.post("/stream-key", (req, res) => {
   const { streamKey } = req.body;
   if (!streamKey) return res.status(400).json({ error: "streamKey를 제공해야 합니다." });
@@ -104,20 +104,16 @@ app.post("/stream-key", (req, res) => {
   VALID_STREAM_KEYS.add(streamKey);
   res.status(201).json({ message: "스트리밍 키 추가 완료.", streamKey });
 });
-
 app.get("/stream-keys", (req, res) => {
   res.json({ streamKeys: Array.from(VALID_STREAM_KEYS) });
 });
-
 process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Promise Rejection:", reason);
 });
-
 nms.run();
 app.listen(PORT, () => {
   console.log(`Express 서버가 ${PORT} 포트에서 실행 중입니다.`);
 });
-
 console.log("미디어 서버가 시작되었습니다.");
 console.log("RTMP 서버: rtmp://localhost:1935/live");
 console.log("HTTP 서버: http://localhost:8000/live");
