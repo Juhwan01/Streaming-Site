@@ -157,7 +157,7 @@ async def create_room(payload: RoomCreateRequest):
 async def get_streams():
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get("http://3.36.103.8:3001/streams")
+            response = await client.get("http://13.209.42.36:3001/streams")
             room_dt = response.json()
     except httpx.RequestError as e:
         raise HTTPException(
