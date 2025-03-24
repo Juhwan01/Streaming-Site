@@ -4,6 +4,15 @@ const cors = require("cors");
 const crypto = require("crypto");
 const axios = require("axios");
 
+// crypto.getRandomValues polyfill 추가
+if (typeof crypto.getRandomValues !== 'function') {
+  crypto.getRandomValues = function(buffer) {
+    const bytes = crypto.randomBytes(buffer.length);
+    buffer.set(new Uint8Array(bytes));
+    return buffer;
+  };
+}
+
 let version = "4.0.0"; // v4로 버전 업데이트
 global.version = version;
 console.log(`Server Version: ${version}`);
